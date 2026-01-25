@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import supabase from '../../lib/supabase';
+import supabase from '../../Lib/supabase';
 
 const NEW_HOURS = 24;
 
