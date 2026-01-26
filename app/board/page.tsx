@@ -1,8 +1,9 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import supabase from '../../lib/supabase';
+import supabase from '@/lib/supabase';
 
 const NEW_HOURS = 24;
 
@@ -13,7 +14,12 @@ export default function BoardPage() {
   );
   const [members, setMembers] = useState<any[]>([]);
 
-  /* 가족 구성원 */
+  // ✅ NEW 표시용 (빌드 안전)
+  const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
+
+  /* ======================
+     데이터 로딩 함수들
+  ====================== */
   const fetchMembers = async () => {
     const { data } = await supabase
       .from('family_members')
@@ -22,7 +28,6 @@ export default function BoardPage() {
     setMembers(data ?? []);
   };
 
-  /* 게시글 목록 */
   const fetchPosts = async () => {
     const { data } = await supabase
       .from('board_posts')
@@ -32,7 +37,6 @@ export default function BoardPage() {
     setPosts(data ?? []);
   };
 
-  /* 댓글 수 */
   const fetchCommentCounts = async () => {
     const { data } = await supabase
       .from('board_comments')
@@ -46,44 +50,64 @@ export default function BoardPage() {
     setCommentCountMap(map);
   };
 
-useEffect(() => {
-  let mounted = true;
+  /* ======================
+     최초 로딩
+  ====================== */
+  useEffect(() => {
+    let mounted = true;
 
-  const load = async () => {
-    if (!mounted) return;
+    const load = async () => {
+      if (!mounted) return;
 
-    await fetchMembers();
-    await fetchPosts();
-    await fetchCommentCounts();
-  };
+      await fetchMembers();
+      await fetchPosts();
+      await fetchCommentCounts();
+    };
 
-  load();
+    load();
 
-  return () => {
-    mounted = false;
-  };
-}, []);
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
+  /* ======================
+     NEW 게시글 계산 (🔥 핵심 수정)
+  ====================== */
+  useEffect(() => {
+    const set = new Set<string>();
+    const now = Date.now();
+
+    posts.forEach((post) => {
+      const created = new Date(post.created_at).getTime();
+      const diffHours = (now - created) / (1000 * 60 * 60);
+
+      if (diffHours <= NEW_HOURS) {
+        set.add(post.id);
+      }
+    });
+
+    setNewPostIds(set);
+  }, [posts]);
+
+  /* ======================
+     유틸
+  ====================== */
   const getNameById = (id: string) =>
     members.find((m) => m.id === id)?.name ?? '알 수 없음';
 
-  const isNewPost = (createdAt: string) => {
-    const diff =
-      (Date.now() - new Date(createdAt).getTime()) /
-      (1000 * 60 * 60);
-    return diff <= NEW_HOURS;
-  };
-
+  /* ======================
+     렌더
+  ====================== */
   return (
     <main style={{ padding: '16px' }}>
-      {/* ✅ 폭 제어 컨테이너 */}
       <div
         style={{
           maxWidth: '720px',
           margin: '0 auto',
         }}
       >
-        {/* ✅ 고정 헤더 */}
+        {/* 고정 헤더 */}
         <div
           style={{
             position: 'sticky',
@@ -106,14 +130,14 @@ useEffect(() => {
             <Link
               href="/board/new"
               style={{
-      fontSize: '14px',
-      padding: '6px 10px',
-      border: '1px solid #ddd',
-      borderRadius: '6px',
-      textDecoration: 'none',
-      color: '#333',
-      whiteSpace: 'nowrap',
-    }}
+                fontSize: '14px',
+                padding: '6px 10px',
+                border: '1px solid #ddd',
+                borderRadius: '6px',
+                textDecoration: 'none',
+                color: '#333',
+                whiteSpace: 'nowrap',
+              }}
             >
               글쓰기
             </Link>
@@ -133,7 +157,8 @@ useEffect(() => {
               <Link href={`/board/${post.id}`}>
                 <strong>{post.title}</strong>
 
-                {isNewPost(post.created_at) && (
+                {/* ✅ NEW 표시 (빌드 안전) */}
+                {newPostIds.has(post.id) && (
                   <span
                     style={{
                       marginLeft: '6px',
