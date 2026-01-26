@@ -74,10 +74,23 @@ export default function CardManagerPage() {
     setBenefits(map);
   };
 
-  useEffect(() => {
-    fetchMembers();
-    fetchCards();
-  }, []);
+ useEffect(() => {
+  let mounted = true;
+
+  const load = async () => {
+    if (!mounted) return;
+
+    await fetchMembers();
+    await fetchCards();
+   
+  };
+
+  load();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
 
   /* ======================
      저장

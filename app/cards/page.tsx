@@ -76,13 +76,37 @@ export default function CardBenefitsPage() {
     setBenefits(data ?? []);
   };
 
-  useEffect(() => {
-    fetchMembers();
-  }, []);
+useEffect(() => {
+  let mounted = true;
 
-  useEffect(() => {
-    fetchBenefitsByCategory(selectedCategory);
-  }, [selectedCategory]);
+  const load = async () => {
+    if (!mounted) return;
+    await fetchMembers();
+  };
+
+  load();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
+
+useEffect(() => {
+  if (!selectedCategory) return;
+
+  let mounted = true;
+
+  const load = async () => {
+    if (!mounted) return;
+    await fetchBenefitsByCategory(selectedCategory);
+  };
+
+  load();
+
+  return () => {
+    mounted = false;
+  };
+}, [selectedCategory]);
 
   const getNameById = (id: string) =>
     members.find((m) => m.id === id)?.name ?? '알 수 없음';

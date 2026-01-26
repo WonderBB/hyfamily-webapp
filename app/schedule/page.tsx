@@ -52,14 +52,37 @@ export default function SchedulePage() {
     setSchedules(data ?? []);
   };
 
-  useEffect(() => {
-    fetchMembers();
-  }, []);
+useEffect(() => {
+  let mounted = true;
 
-  useEffect(() => {
-    fetchSchedules();
-  }, [currentMonth]);
+  const load = async () => {
+    if (!mounted) return;
+    await fetchMembers();
+  };
 
+  load();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
+
+useEffect(() => {
+  if (!currentMonth) return;
+
+  let mounted = true;
+
+  const load = async () => {
+    if (!mounted) return;
+    await fetchSchedules();
+  };
+
+  load();
+
+  return () => {
+    mounted = false;
+  };
+}, [currentMonth]);
   /* ======================
      일정 추가
   ====================== */

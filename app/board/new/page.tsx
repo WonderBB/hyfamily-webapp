@@ -15,17 +15,27 @@ export default function BoardNewPage() {
   const [error, setError] = useState<string | null>(null);
 
   // ✅ 가족 구성원 불러오기
-  useEffect(() => {
-    const fetchMembers = async () => {
-      const { data } = await supabase
-        .from('family_members')
-        .select('id, name');
+useEffect(() => {
+  let mounted = true;
 
+  const load = async () => {
+    if (!mounted) return;
+
+    const { data } = await supabase
+      .from('family_members')
+      .select('id, name');
+
+    if (mounted) {
       setMembers(data ?? []);
-    };
+    }
+  };
 
-    fetchMembers();
-  }, []);
+  load();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
 
   // 게시글 등록
   const handleSubmit = async () => {

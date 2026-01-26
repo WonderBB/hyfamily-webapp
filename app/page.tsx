@@ -117,12 +117,24 @@ const fetchWeekSchedules = async () => {
   setWeekSchedules(data ?? []);
 };
 
-  useEffect(() => {
-    fetchMembers();
-    fetchNotices();
-    fetchRecentPosts();
-    fetchWeekSchedules();
-  }, []);
+useEffect(() => {
+  let mounted = true;
+
+  const load = async () => {
+    if (!mounted) return;
+
+    await fetchMembers();
+    await fetchNotices();
+    await fetchRecentPosts();
+    await fetchWeekSchedules();
+  };
+
+  load();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
 
 
 const isToday = (dateStr: string) => {

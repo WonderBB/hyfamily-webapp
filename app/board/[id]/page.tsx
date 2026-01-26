@@ -90,10 +90,23 @@ export default function BoardDetailPage() {
     router.push('/board');
   };
 
-  useEffect(() => {
-    fetchMembers();
-    fetchPost();
-  }, []);
+useEffect(() => {
+  let mounted = true;
+
+  const load = async () => {
+    if (!mounted) return;
+
+    await fetchMembers();
+    await fetchPosts();
+    
+  };
+
+  load();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
 
   const getNameById = (id: string) =>
     members.find((m) => m.id === id)?.name ?? '알 수 없음';

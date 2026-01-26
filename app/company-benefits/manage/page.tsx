@@ -53,13 +53,37 @@ export default function CompanyBenefitsManagePage() {
     setBenefits(map);
   };
 
-  useEffect(() => {
-    fetchCompanies();
-  }, []);
+useEffect(() => {
+  let mounted = true;
 
-  useEffect(() => {
-    fetchBenefits(selectedCompanyId);
-  }, [selectedCompanyId]);
+  const load = async () => {
+    if (!mounted) return;
+    await fetchCompanies();
+  };
+
+  load();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
+
+useEffect(() => {
+  if (!selectedCompanyId) return;
+
+  let mounted = true;
+
+  const load = async () => {
+    if (!mounted) return;
+    await fetchBenefits(selectedCompanyId);
+  };
+
+  load();
+
+  return () => {
+    mounted = false;
+  };
+}, [selectedCompanyId]);
 
   /* ======================
      저장

@@ -46,11 +46,23 @@ export default function BoardPage() {
     setCommentCountMap(map);
   };
 
-  useEffect(() => {
-    fetchMembers();
-    fetchPosts();
-    fetchCommentCounts();
-  }, []);
+useEffect(() => {
+  let mounted = true;
+
+  const load = async () => {
+    if (!mounted) return;
+
+    await fetchMembers();
+    await fetchPosts();
+    await fetchCommentCounts();
+  };
+
+  load();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
 
   const getNameById = (id: string) =>
     members.find((m) => m.id === id)?.name ?? '알 수 없음';

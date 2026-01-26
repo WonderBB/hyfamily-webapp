@@ -37,11 +37,23 @@ export default function CompanyBenefitsPage() {
     setBenefits(data ?? []);
   };
 
-  useEffect(() => {
-    fetchCompanies();
-    fetchBenefits();
-  }, []);
+useEffect(() => {
+  let mounted = true;
 
+  const load = async () => {
+    if (!mounted) return;
+
+    await fetchCompanies();
+    await fetchBenefits();
+   
+  };
+
+  load();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
   const getBenefit = (companyId: string, category: string) =>
     benefits.find(
       (b) =>
