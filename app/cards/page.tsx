@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import supabase from '../../Lib/supabase';
+import supabase from '@/lib/supabase';
 
 const CATEGORIES = [
   '주유',

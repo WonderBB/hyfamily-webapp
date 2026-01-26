@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import supabase from '../Lib/supabase';
+import supabase from '@/lib/supabase';
 
 export default function Home() {
   const [members, setMembers] = useState<any[]>([]);
@@ -40,15 +40,24 @@ export default function Home() {
   const saveNotice = async (authorId: string) => {
     const content = notices[authorId] ?? '';
 
-    await supabase
+    const { error } = await supabase
       .from('home_notices')
-      .upsert({
-        author_id: authorId,
-        content,
-        updated_at: new Date().toISOString(),
-      });
+      .upsert(
+        {
+          author_id: authorId,
+          content,
+        },
+        { onConflict: 'author_id' }
+      );
+
+    if (error) {
+      console.error('공지 저장 실패', error);
+      alert('공지 저장 중 오류가 발생했습니다.');
+      return;
+    }
 
     setEditing((prev) => ({ ...prev, [authorId]: false }));
+    fetchNotices(); // ✅ 저장 후 다시 불러오기
   };
 
   /* ======================
@@ -65,29 +74,48 @@ export default function Home() {
   };
 
   /* ======================
-     이번 주 일정
+     이번 주 일정 (월요일 ~ 일요일 기준)
   ====================== */
-  const fetchWeekSchedules = async () => {
-    const today = new Date();
-    const day = today.getDay(); // 0=일
-    const sunday = new Date(today);
-    sunday.setDate(today.getDate() - day);
+const fetchWeekSchedules = async () => {
+  const today = new Date();
+  const day = today.getDay(); // 0=일, 1=월 ...
 
-    const saturday = new Date(sunday);
-    saturday.setDate(sunday.getDate() + 6);
+  // 월요일 기준
+  const diffToMonday = day === 0 ? -6 : 1 - day;
 
-    const start = sunday.toISOString().slice(0, 10);
-    const end = saturday.toISOString().slice(0, 10);
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + diffToMonday);
+  monday.setHours(0, 0, 0, 0);
 
-    const { data } = await supabase
-      .from('family_schedules')
-      .select('id, title, schedule_date, author_id')
-      .gte('schedule_date', start)
-      .lte('schedule_date', end)
-      .order('schedule_date');
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  sunday.setHours(23, 59, 59, 999);
 
-    setWeekSchedules(data ?? []);
+  // ✅ 로컬 날짜 문자열 생성 (중요)
+  const formatDate = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   };
+
+  const start = formatDate(monday);
+  const end = formatDate(sunday);
+
+  const { data, error } = await supabase
+    .from('family_schedules')
+    .select('id, title, schedule_date, author_id')
+    .gte('schedule_date', start)
+    .lte('schedule_date', end)
+    .order('schedule_date');
+
+  if (error) {
+    console.error('주간 일정 조회 실패', error);
+    return;
+  }
+
+  setWeekSchedules(data ?? []);
+};
 
   useEffect(() => {
     fetchMembers();
@@ -96,17 +124,25 @@ export default function Home() {
     fetchWeekSchedules();
   }, []);
 
+
+const isToday = (dateStr: string) => {
+  const today = new Date();
+  const d = new Date(dateStr);
+
+  return (
+    today.getFullYear() === d.getFullYear() &&
+    today.getMonth() === d.getMonth() &&
+    today.getDate() === d.getDate()
+  );
+};
+
   const getNameById = (id: string) =>
     members.find((m) => m.id === id)?.name ?? '알 수 없음';
 
   return (
     <main style={{ padding: '16px' }}>
-      {/* <h1 style={{ fontSize: '20px', marginBottom: '16px' }}>
-        가족 웹앱
-      </h1> */}
-
       <div style={{ display: 'grid', gap: '12px' }}>
-        {/* 📢 공지 */}
+        {/* 📢 오늘의 공지 */}
         <section style={cardStyle}>
           <h2>📢 오늘의 공지</h2>
 
@@ -159,7 +195,7 @@ export default function Home() {
           ))}
         </section>
 
-        {/* 📅 가족 일정 (이번 주 요약 추가됨) */}
+        {/* 📅 가족 일정 (이번 주) */}
         <section style={cardStyle}>
           <h2>📅 가족 일정 (이번 주)</h2>
 
@@ -169,12 +205,38 @@ export default function Home() {
 
           <ul style={{ paddingLeft: '16px' }}>
             {weekSchedules.map((s) => (
-              <li key={s.id} style={{ marginBottom: '4px' }}>
-                <strong>
-                  {new Date(s.schedule_date).getDate()}일
-                </strong>{' '}
-                - {getNameById(s.author_id)} : {s.title}
-              </li>
+           <li
+  key={s.id}
+  style={{
+    marginBottom: '6px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+  }}
+>
+  {/* 날짜 + 빨간 점 */}
+  <span style={{ position: 'relative', display: 'inline-block' }}>
+    <strong>
+      {new Date(s.schedule_date).getDate()}일
+    </strong>
+
+    {isToday(s.schedule_date) && (
+      <span
+        style={{
+          position: 'absolute',
+          top: '-2px',
+          right: '-6px',
+          width: '6px',
+          height: '6px',
+          backgroundColor: '#e53935',
+          borderRadius: '50%',
+        }}
+      />
+    )}
+  </span>
+
+  <span>- {s.title}</span>
+</li>
             ))}
           </ul>
 
@@ -204,9 +266,7 @@ export default function Home() {
                 </a>
                 <div style={{ fontSize: '12px', color: '#666' }}>
                   {getNameById(post.author_id)} ·{' '}
-                  {new Date(
-                    post.created_at
-                  ).toLocaleDateString()}
+                  {new Date(post.created_at).toLocaleDateString()}
                 </div>
               </li>
             ))}
@@ -224,12 +284,8 @@ export default function Home() {
         <section style={cardStyle}>
           <h2>🔗 바로가기</h2>
           <ul>
-            <li>
-              <a href="/cards">카드 혜택</a>
-            </li>
-            <li>
-              <a href="/company-benefits">회사 복지</a>
-            </li>
+            <li><a href="/cards">카드 혜택</a></li>
+            <li><a href="/company-benefits">회사 복지</a></li>
             <li>
               요리 레시피 (
               <a

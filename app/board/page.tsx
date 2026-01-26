@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import supabase from '../../Lib/supabase';
+import supabase from '@/lib/supabase';
 
 const NEW_HOURS = 24;
 
@@ -89,21 +89,21 @@ export default function BoardPage() {
               alignItems: 'center',
             }}
           >
-            <h1 style={{ margin: 0 }}>게시판</h1>
+            <h1 style={{ margin: 0 }}>📝 게시판</h1>
 
             <Link
               href="/board/new"
               style={{
-                padding: '6px 12px',
-                border: '1px solid #1976d2',
-                borderRadius: '6px',
-                color: '#1976d2',
-                textDecoration: 'none',
-                fontSize: '14px',
-                whiteSpace: 'nowrap',
-              }}
+      fontSize: '14px',
+      padding: '6px 10px',
+      border: '1px solid #ddd',
+      borderRadius: '6px',
+      textDecoration: 'none',
+      color: '#333',
+      whiteSpace: 'nowrap',
+    }}
             >
-              ✏️ 글쓰기
+              글쓰기
             </Link>
           </div>
         </div>

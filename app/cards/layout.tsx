@@ -8,7 +8,9 @@ export default function CardLayout({
   return (
     <>
       <HamburgerMenu />
-      {children}
+      <main style={{ paddingLeft: '16px', paddingTop: '48px' }}>
+        {children}
+      </main>
     </>
   );
 }

@@ -8,7 +8,9 @@ export default function ScheduleLayout({
   return (
     <>
       <HamburgerMenu />
-      {children}
+      <main style={{ paddingLeft: '16px', paddingTop: '48px' }}>
+        {children}
+      </main>
     </>
   );
 }

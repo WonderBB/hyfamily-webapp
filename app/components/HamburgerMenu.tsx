@@ -2,68 +2,71 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export default function HamburgerMenu() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+
+  // 페이지 이동 시 메뉴 자동 닫힘
+  if (open && pathname) {
+    // pathname 변경 감지용
+  }
 
   return (
     <>
-      {/* 상단 바 */}
-      <header style={headerStyle}>
-        <button onClick={() => setOpen(!open)} style={buttonStyle}>
-          ☰
-        </button>
-      </header>
+      {/* ☰ 버튼 */}
+      <button
+        onClick={() => setOpen((prev) => !prev)}
+        style={{
+          position: 'fixed',
+          top: '12px',
+          left: '12px',
+          zIndex: 1001,
+          fontSize: '20px',
+          background: 'white',
+          border: '1px solid #ddd',
+          borderRadius: '6px',
+          padding: '6px 10px',
+          cursor: 'pointer',
+        }}
+        aria-label="메뉴"
+      >
+        ☰
+      </button>
 
-      {/* 메뉴 */}
+      {/* 메뉴 패널 */}
       {open && (
-        <nav style={menuStyle}>
-          <Link href="/" onClick={() => setOpen(false)}>🏠 홈</Link>
-          <Link href="/schedules" onClick={() => setOpen(false)}>📅 가족 일정</Link>
-          <Link href="/board" onClick={() => setOpen(false)}>📝 게시판</Link>
-          <Link href="/cards" onClick={() => setOpen(false)}>💳 카드 혜택</Link>
-          <Link href="/company-benefits" onClick={() => setOpen(false)}>🏢 회사 복지</Link>
-          <a
-            href="https://wonderbb.github.io/hyrecipes/"
-            target="_blank"
-            rel="noreferrer"
-          >
-            🍳 요리 레시피
-          </a>
-        </nav>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '220px',
+            height: '100vh',
+            background: 'white',
+            borderRight: '1px solid #ddd',
+            padding: '60px 16px 16px',
+            zIndex: 1000,
+          }}
+        >
+          <nav style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <Link href="/" onClick={() => setOpen(false)}>🏠 홈</Link>
+            <Link href="/schedule" onClick={() => setOpen(false)}>📅 가족 일정</Link>
+            <Link href="/board" onClick={() => setOpen(false)}>📝 게시판</Link>
+            <Link href="/cards" onClick={() => setOpen(false)}>💳 카드 혜택</Link>
+            <Link href="/company-benefits" onClick={() => setOpen(false)}>🏢 회사 복지</Link>
+            <a
+              href="https://wonderbb.github.io/hyrecipes/"
+              target="_blank"
+              rel="noreferrer"
+              onClick={() => setOpen(false)}
+            >
+              🍳 요리 레시피
+            </a>
+          </nav>
+        </div>
       )}
     </>
   );
 }
-
-/* ===== 스타일 ===== */
-
-const headerStyle = {
-  height: '48px',
-  display: 'flex',
-  alignItems: 'center',
-  padding: '0 12px',
-  borderBottom: '1px solid #eee',
-};
-
-const buttonStyle = {
-  fontSize: '20px',
-  background: 'none',
-  border: 'none',
-  cursor: 'pointer',
-};
-
-const menuStyle = {
-  position: 'fixed' as const,
-  top: 0,
-  left: 0,
-  width: '220px',
-  height: '100vh',
-  background: '#fff',
-  padding: '16px',
-  display: 'flex',
-  flexDirection: 'column' as const,
-  gap: '12px',
-  boxShadow: '2px 0 6px rgba(0,0,0,0.1)',
-  zIndex: 1000,
-};
