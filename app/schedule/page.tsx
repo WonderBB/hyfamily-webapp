@@ -2,7 +2,25 @@
 export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
-import supabase from '../../lib/supabase';
+import supabase from '@/lib/supabase';
+
+// 🇰🇷 한국 공휴일 (필요한 연도만 추가)
+const HOLIDAYS: string[] = [
+  // 2026년
+  '2026-01-01', // 신정
+  '2026-02-16', // 설날
+  '2026-02-17',
+  '2026-02-18',
+  '2026-03-01', // 삼일절
+  '2026-05-05', // 어린이날
+  '2026-06-06', // 현충일
+  '2026-08-15', // 광복절
+  '2026-10-05', // 추석
+  '2026-10-06',
+  '2026-10-07',
+  '2026-10-09', // 한글날
+  '2026-12-25', // 성탄절
+];
 
 export default function SchedulePage() {
   const today = new Date();
@@ -22,6 +40,8 @@ export default function SchedulePage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
 
+const isHoliday = (dateStr: string) => HOLIDAYS.includes(dateStr);
+
   /* ======================
      가족 구성원
   ====================== */
@@ -36,22 +56,30 @@ export default function SchedulePage() {
   /* ======================
      월별 일정 조회
   ====================== */
-  const fetchSchedules = async () => {
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
+const fetchSchedules = async () => {
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
 
-    const start = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-    const end = `${year}-${String(month + 1).padStart(2, '0')}-31`;
+  const startDate = new Date(year, month, 1);
+  const endDate = new Date(year, month + 1, 0); // ✅ 핵심
 
-    const { data } = await supabase
-      .from('family_schedules')
-      .select('*')
-      .gte('schedule_date', start)
-      .lte('schedule_date', end)
-      .order('schedule_date');
+  const start = startDate.toISOString().slice(0, 10);
+  const end = endDate.toISOString().slice(0, 10);
 
-    setSchedules(data ?? []);
-  };
+  const { data, error } = await supabase
+    .from('family_schedules')
+    .select('*')
+    .gte('schedule_date', start)
+    .lte('schedule_date', end)
+    .order('schedule_date');
+
+  if (error) {
+    console.error('일정 조회 오류', error);
+    return;
+  }
+
+  setSchedules(data ?? []);
+};
 
 useEffect(() => {
   let mounted = true;
@@ -87,18 +115,28 @@ useEffect(() => {
   /* ======================
      일정 추가
   ====================== */
-  const addSchedule = async () => {
-    if (!selectedDate || !authorId || !title.trim()) return;
+const addSchedule = async () => {
+  if (!selectedDate || !authorId || !title.trim()) return;
 
-    await supabase.from('family_schedules').insert({
-      author_id: authorId,
-      title,
-      schedule_date: selectedDate,
-    });
+  const { error } = await supabase.from('family_schedules').insert({
+    author_id: authorId,
+    title,
+    schedule_date: selectedDate,
+  });
 
-    setTitle('');
-    fetchSchedules();
-  };
+  if (error) {
+    console.error(error);
+    alert('일정 추가 중 오류가 발생했습니다.');
+    return;
+  }
+
+  // ✅ 핵심: 추가한 날짜 기준으로 월 이동
+  const d = new Date(selectedDate);
+  setCurrentMonth(new Date(d.getFullYear(), d.getMonth(), 1));
+
+  setTitle('');
+  fetchSchedules();
+};
 
   /* ======================
      일정 수정 / 삭제
@@ -200,9 +238,15 @@ useEffect(() => {
             day
           ).padStart(2, '0')}`;
 
-          let color = '#000';
-          if (dayOfWeek === 0) color = 'red';
-          if (dayOfWeek === 6) color = 'blue';
+        let color = '#000';
+
+if (dayOfWeek === 0 || isHoliday(dateStr)) {
+  color = 'red'; // 일요일 또는 공휴일
+}
+
+if (dayOfWeek === 6) {
+  color = 'blue'; // 토요일
+}
 
           const isToday = dateStr === todayStr;
           const isSelected = dateStr === selectedDate;

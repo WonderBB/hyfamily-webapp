@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import supabase from '../../../lib/supabase';
+import supabase from '@/lib/supabase';
 
 export default function BoardDetailPage() {
   const params = useParams();
@@ -98,7 +98,7 @@ useEffect(() => {
     if (!mounted) return;
 
     await fetchMembers();
-    await fetchPosts();
+    await fetchPost();
     
   };
 
