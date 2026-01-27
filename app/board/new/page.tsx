@@ -15,30 +15,34 @@ export default function BoardNewPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ✅ 가족 구성원 불러오기
-useEffect(() => {
-  let mounted = true;
+  /* ======================
+     가족 구성원 불러오기
+  ====================== */
+  useEffect(() => {
+    let mounted = true;
 
-  const load = async () => {
-    if (!mounted) return;
+    const load = async () => {
+      if (!mounted) return;
 
-    const { data } = await supabase
-      .from('family_members')
-      .select('id, name');
+      const { data } = await supabase
+        .from('family_members')
+        .select('id, name');
 
-    if (mounted) {
-      setMembers(data ?? []);
-    }
-  };
+      if (mounted) {
+        setMembers(data ?? []);
+      }
+    };
 
-  load();
+    load();
 
-  return () => {
-    mounted = false;
-  };
-}, []);
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  // 게시글 등록
+  /* ======================
+     게시글 등록
+  ====================== */
   const handleSubmit = async () => {
     if (!authorId) {
       setError('작성자를 선택하세요.');
@@ -72,54 +76,58 @@ useEffect(() => {
   };
 
   return (
-    <main style={{ padding: '16px' }}>
-      <h1>게시글 작성</h1>
+    <main>
+      <div className="page-container">
+        <h1>게시글 작성</h1>
 
-      {/* 작성자 선택 */}
-      <div style={{ marginTop: '12px' }}>
-        <select
-          value={authorId}
-          onChange={(e) => setAuthorId(e.target.value)}
-          style={{ width: '100%', padding: '8px' }}
-        >
-          <option value="">작성자 선택</option>
-          {members.map((member) => (
-            <option key={member.id} value={member.id}>
-              {member.name}
-            </option>
-          ))}
-        </select>
+        <div className="card">
+          {/* 작성자 선택 */}
+          <select
+            value={authorId}
+            onChange={(e) => setAuthorId(e.target.value)}
+            style={{ width: '100%', padding: '8px', marginBottom: '8px' }}
+          >
+            <option value="">작성자 선택</option>
+            {members.map((member) => (
+              <option key={member.id} value={member.id}>
+                {member.name}
+              </option>
+            ))}
+          </select>
+
+          {/* 제목 */}
+          <input
+            type="text"
+            placeholder="제목"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            style={{ width: '100%', padding: '8px', marginBottom: '8px' }}
+          />
+
+          {/* 내용 */}
+          <textarea
+            placeholder="내용"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            rows={8}
+            style={{ width: '100%', padding: '8px' }}
+          />
+
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            style={{ marginTop: '12px' }}
+          >
+            {loading ? '저장 중...' : '등록'}
+          </button>
+
+          {error && (
+            <p style={{ color: 'red', marginTop: '8px' }}>
+              {error}
+            </p>
+          )}
+        </div>
       </div>
-
-      <div style={{ marginTop: '12px' }}>
-        <input
-          type="text"
-          placeholder="제목"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          style={{ width: '100%', padding: '8px' }}
-        />
-      </div>
-
-      <div style={{ marginTop: '12px' }}>
-        <textarea
-          placeholder="내용"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          rows={8}
-          style={{ width: '100%', padding: '8px' }}
-        />
-      </div>
-
-      <button
-        onClick={handleSubmit}
-        disabled={loading}
-        style={{ marginTop: '12px' }}
-      >
-        {loading ? '저장 중...' : '등록'}
-      </button>
-
-      {error && <p style={{ color: 'red' }}>{error}</p>}
     </main>
   );
 }

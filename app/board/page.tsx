@@ -14,11 +14,11 @@ export default function BoardPage() {
   );
   const [members, setMembers] = useState<any[]>([]);
 
-  // ✅ NEW 표시용 (빌드 안전)
+  // NEW 표시용
   const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
 
   /* ======================
-     데이터 로딩 함수들
+     데이터 로딩
   ====================== */
   const fetchMembers = async () => {
     const { data } = await supabase
@@ -50,29 +50,24 @@ export default function BoardPage() {
     setCommentCountMap(map);
   };
 
-  /* ======================
-     최초 로딩
-  ====================== */
   useEffect(() => {
     let mounted = true;
 
     const load = async () => {
       if (!mounted) return;
-
       await fetchMembers();
       await fetchPosts();
       await fetchCommentCounts();
     };
 
     load();
-
     return () => {
       mounted = false;
     };
   }, []);
 
   /* ======================
-     NEW 게시글 계산 (🔥 핵심 수정)
+     NEW 게시글 계산
   ====================== */
   useEffect(() => {
     const set = new Set<string>();
@@ -81,18 +76,12 @@ export default function BoardPage() {
     posts.forEach((post) => {
       const created = new Date(post.created_at).getTime();
       const diffHours = (now - created) / (1000 * 60 * 60);
-
-      if (diffHours <= NEW_HOURS) {
-        set.add(post.id);
-      }
+      if (diffHours <= NEW_HOURS) set.add(post.id);
     });
 
     setNewPostIds(set);
   }, [posts]);
 
-  /* ======================
-     유틸
-  ====================== */
   const getNameById = (id: string) =>
     members.find((m) => m.id === id)?.name ?? '알 수 없음';
 
@@ -100,21 +89,17 @@ export default function BoardPage() {
      렌더
   ====================== */
   return (
-    <main style={{ padding: '16px' }}>
-      <div
-        style={{
-          maxWidth: '720px',
-          margin: '0 auto',
-        }}
-      >
+    <main>
+      <div className="page-container">
         {/* 고정 헤더 */}
         <div
           style={{
             position: 'sticky',
             top: 0,
             zIndex: 10,
-            background: '#fff',
-            padding: '12px 0',
+            background: 'var(--background)',
+            paddingBottom: '8px',
+            marginBottom: '8px',
             borderBottom: '1px solid #eee',
           }}
         >
@@ -125,17 +110,15 @@ export default function BoardPage() {
               alignItems: 'center',
             }}
           >
-            <h1 style={{ margin: 0 }}>📝 게시판</h1>
+            <h1>📝 게시판</h1>
 
             <Link
               href="/board/new"
               style={{
-                fontSize: '14px',
+                fontSize: '13px',
                 padding: '6px 10px',
                 border: '1px solid #ddd',
                 borderRadius: '6px',
-                textDecoration: 'none',
-                color: '#333',
                 whiteSpace: 'nowrap',
               }}
             >
@@ -150,20 +133,19 @@ export default function BoardPage() {
             <li
               key={post.id}
               style={{
-                padding: '12px 0',
+                padding: '10px 0',
                 borderBottom: '1px solid #eee',
               }}
             >
               <Link href={`/board/${post.id}`}>
                 <strong>{post.title}</strong>
 
-                {/* ✅ NEW 표시 (빌드 안전) */}
                 {newPostIds.has(post.id) && (
                   <span
                     style={{
                       marginLeft: '6px',
-                      fontSize: '12px',
-                      color: 'white',
+                      fontSize: '11px',
+                      color: '#fff',
                       background: '#e53935',
                       padding: '2px 6px',
                       borderRadius: '8px',
@@ -173,12 +155,12 @@ export default function BoardPage() {
                   </span>
                 )}
 
-                <span style={{ marginLeft: '6px', color: '#666' }}>
+                <span style={{ marginLeft: '6px', color: '#666', fontSize: '12px' }}>
                   ({commentCountMap[post.id] ?? 0})
                 </span>
               </Link>
 
-              <div style={{ fontSize: '13px', color: '#666' }}>
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
                 {getNameById(post.author_id)} ·{' '}
                 {new Date(post.created_at).toLocaleDateString()}
               </div>

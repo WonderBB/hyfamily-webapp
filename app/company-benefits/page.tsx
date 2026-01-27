@@ -38,111 +38,107 @@ export default function CompanyBenefitsPage() {
     setBenefits(data ?? []);
   };
 
-useEffect(() => {
-  let mounted = true;
+  useEffect(() => {
+    let mounted = true;
 
-  const load = async () => {
-    if (!mounted) return;
+    const load = async () => {
+      if (!mounted) return;
+      await fetchCompanies();
+      await fetchBenefits();
+    };
 
-    await fetchCompanies();
-    await fetchBenefits();
-   
-  };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  load();
-
-  return () => {
-    mounted = false;
-  };
-}, []);
   const getBenefit = (companyId: string, category: string) =>
     benefits.find(
-      (b) =>
-        b.company_id === companyId && b.category === category
+      (b) => b.company_id === companyId && b.category === category
     )?.content ?? '-';
 
   return (
-    <main style={{ padding: '16px', maxWidth: '900px', margin: '0 auto' }}>
-<div
-  style={{
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '16px',
-  }}
->
-  <h1 style={{ margin: 0 }}>🏢 회사 복지</h1>
-
-  <a
-    href="/company-benefits/manage"
-    style={{
-      fontSize: '14px',
-      padding: '6px 10px',
-      border: '1px solid #ddd',
-      borderRadius: '6px',
-      textDecoration: 'none',
-      color: '#333',
-      whiteSpace: 'nowrap',
-    }}
-  >
-    복지 관리
-  </a>
-</div>
-
-
-      <section style={cardStyle}>
-        <table
+    <main>
+      <div className="page-container">
+        {/* 제목 + 관리 버튼 */}
+        <div
           style={{
-            width: '100%',
-            borderCollapse: 'collapse',
-            fontSize: '14px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px',
           }}
         >
-          <thead>
-            <tr>
-              <th style={thStyle}>카테고리</th>
-              {companies.map((c) => (
-                <th key={c.id} style={thStyle}>
-                  {c.company_name}
-                </th>
-              ))}
-            </tr>
-          </thead>
+          <h1 style={{ margin: 0 }}>🏢 회사 복지</h1>
 
-          <tbody>
-            {CATEGORIES.map((cat) => (
-              <tr key={cat}>
-                <td style={tdStyle}>
-                  <strong>{cat}</strong>
-                </td>
+          <a
+            href="/company-benefits/manage"
+            style={{
+              fontSize: '13px',
+              padding: '6px 10px',
+              border: '1px solid #ddd',
+              borderRadius: '6px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            복지 관리
+          </a>
+        </div>
 
+        {/* 테이블 카드 */}
+        <section className="card" style={{ overflowX: 'auto' }}>
+          <table
+            style={{
+              width: '100%',
+              borderCollapse: 'collapse',
+              fontSize: '13px',
+            }}
+          >
+            <thead>
+              <tr>
+                <th style={thStyle}>카테고리</th>
                 {companies.map((c) => (
-                  <td key={c.id} style={tdStyle}>
-                    {getBenefit(c.id, cat)}
-                  </td>
+                  <th key={c.id} style={thStyle}>
+                    {c.company_name}
+                  </th>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+            </thead>
+
+            <tbody>
+              {CATEGORIES.map((cat) => (
+                <tr key={cat}>
+                  <td style={tdStyle}>
+                    <strong>{cat}</strong>
+                  </td>
+
+                  {companies.map((c) => (
+                    <td key={c.id} style={tdStyle}>
+                      {getBenefit(c.id, cat)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      </div>
     </main>
   );
 }
 
-const cardStyle = {
-  border: '1px solid #ddd',
-  borderRadius: '8px',
-  padding: '12px',
-};
-
+/* ===== 테이블 최소 스타일 ===== */
 const thStyle = {
   borderBottom: '1px solid #ccc',
-  padding: '8px',
+  padding: '6px',
   textAlign: 'left' as const,
+  fontWeight: 600,
+  whiteSpace: 'nowrap' as const,
 };
 
 const tdStyle = {
   borderBottom: '1px solid #eee',
-  padding: '8px',
+  padding: '6px',
+  verticalAlign: 'top' as const,
 };

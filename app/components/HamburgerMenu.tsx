@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -8,64 +8,105 @@ export default function HamburgerMenu() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
-  // 페이지 이동 시 메뉴 자동 닫힘
-  if (open && pathname) {
-    // pathname 변경 감지용
-  }
+  /* ======================
+     오늘 날짜 + 요일
+  ====================== */
+  const todayLabel = new Date().toLocaleDateString('ko-KR', {
+    month: 'numeric',
+    day: 'numeric',
+    weekday: 'short',
+  });
+
+  /* ======================
+     페이지 이동 시 메뉴 닫기
+  ====================== */
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   return (
     <>
-      {/* ☰ 버튼 */}
-      <button
-        onClick={() => setOpen((prev) => !prev)}
+      {/* ===== 상단 헤더 ===== */}
+      <header
         style={{
           position: 'fixed',
-          top: '12px',
-          left: '12px',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '48px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '0 12px',
+          background: '#fff',
+          borderBottom: '1px solid #ddd',
           zIndex: 1001,
-          fontSize: '20px',
-          background: 'white',
-          border: '1px solid #ddd',
-          borderRadius: '6px',
-          padding: '6px 10px',
-          cursor: 'pointer',
         }}
-        aria-label="메뉴"
       >
-        ☰
-      </button>
+        {/* ☰ 버튼 */}
+        <button
+          onClick={() => setOpen((prev) => !prev)}
+          aria-label="메뉴"
+          style={{
+            fontSize: '20px',
+            border: '1px solid #ddd',
+            borderRadius: '6px',
+            padding: '6px 10px',
+            background: '#fff',
+            cursor: 'pointer',
+          }}
+        >
+          ☰
+        </button>
 
-      {/* 메뉴 패널 */}
-      {open && (
+        {/* 오늘 날짜 */}
         <div
           style={{
+            fontSize: '13px',
+            color: '#666',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {todayLabel}
+        </div>
+      </header>
+
+      {/* ===== 사이드 메뉴 ===== */}
+      {open && (
+        <aside
+          style={{
             position: 'fixed',
-            top: 0,
+            top: '48px',
             left: 0,
             width: '220px',
-            height: '100vh',
-            background: 'white',
+            height: 'calc(100vh - 48px)',
+            background: '#fff',
             borderRight: '1px solid #ddd',
-            padding: '60px 16px 16px',
+            padding: '16px',
             zIndex: 1000,
           }}
         >
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <Link href="/" onClick={() => setOpen(false)}>🏠 홈</Link>
-            <Link href="/schedule" onClick={() => setOpen(false)}>📅 가족 일정</Link>
-            <Link href="/board" onClick={() => setOpen(false)}>📝 게시판</Link>
-            <Link href="/cards" onClick={() => setOpen(false)}>💳 카드 혜택</Link>
-            <Link href="/company-benefits" onClick={() => setOpen(false)}>🏢 회사 복지</Link>
+          <nav
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+            }}
+          >
+            <Link href="/">🏠 홈</Link>
+            <Link href="/schedule">📅 가족 일정</Link>
+            <Link href="/board">📝 게시판</Link>
+            <Link href="/cards">💳 카드 혜택</Link>
+            <Link href="/company-benefits">🏢 회사 복지</Link>
             <a
               href="https://wonderbb.github.io/hyrecipes/"
               target="_blank"
               rel="noreferrer"
-              onClick={() => setOpen(false)}
             >
               🍳 요리 레시피
             </a>
           </nav>
-        </div>
+        </aside>
       )}
     </>
   );

@@ -1,12 +1,6 @@
-export const dynamic = 'force-dynamic';
-
-import type { Metadata } from "next";
-import "./globals.css";
-
-export const metadata: Metadata = {
-  title: "가족 웹앱",
-  description: "가족용 웹 애플리케이션",
-};
+// app/layout.tsx
+import './globals.css';
+import HamburgerMenu from './components/HamburgerMenu';
 
 export default function RootLayout({
   children,
@@ -15,7 +9,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
-      <body>{children}</body>
+      <body>
+        {/* 🔥 햄버거 메뉴 + 상단 헤더 (단 1번만!) */}
+        <HamburgerMenu />
+
+        {/* 🔥 모든 페이지 공통 컨테이너 */}
+        <div className="page-container">
+          {children}
+        </div>
+      </body>
     </html>
   );
 }

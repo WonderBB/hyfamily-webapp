@@ -54,10 +54,7 @@ export default function BoardDetailPage() {
 
     const { error } = await supabase
       .from('board_posts')
-      .update({
-        title,
-        content,
-      })
+      .update({ title, content })
       .eq('id', postId);
 
     if (error) {
@@ -74,8 +71,7 @@ export default function BoardDetailPage() {
      게시글 삭제
   ====================== */
   const deletePost = async () => {
-    const ok = confirm('이 게시글을 삭제할까요?');
-    if (!ok) return;
+    if (!confirm('이 게시글을 삭제할까요?')) return;
 
     const { error } = await supabase
       .from('board_posts')
@@ -91,23 +87,20 @@ export default function BoardDetailPage() {
     router.push('/board');
   };
 
-useEffect(() => {
-  let mounted = true;
+  useEffect(() => {
+    let mounted = true;
 
-  const load = async () => {
-    if (!mounted) return;
+    const load = async () => {
+      if (!mounted) return;
+      await fetchMembers();
+      await fetchPost();
+    };
 
-    await fetchMembers();
-    await fetchPost();
-    
-  };
-
-  load();
-
-  return () => {
-    mounted = false;
-  };
-}, []);
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const getNameById = (id: string) =>
     members.find((m) => m.id === id)?.name ?? '알 수 없음';
@@ -115,68 +108,72 @@ useEffect(() => {
   if (!post) return null;
 
   return (
-    <main style={{ padding: '16px' }}>
-      <h1>게시글 상세</h1>
+    <main>
+      <div className="page-container">
+        <h1>게시글 상세</h1>
 
-      {/* ===== 수정 모드 ===== */}
-      {editing ? (
-        <>
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            style={{ width: '100%', marginBottom: '8px' }}
-          />
+        <div className="card">
+          {/* ===== 수정 모드 ===== */}
+          {editing ? (
+            <>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                style={{ width: '100%', marginBottom: '8px' }}
+              />
 
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={6}
-            style={{ width: '100%' }}
-          />
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={6}
+                style={{ width: '100%' }}
+              />
 
-          <div style={{ marginTop: '12px' }}>
-            <button onClick={updatePost}>저장</button>
-            <button
-              onClick={() => setEditing(false)}
-              style={{ marginLeft: '8px' }}
-            >
-              취소
-            </button>
-          </div>
-        </>
-      ) : (
-        <>
-          {/* ===== 보기 모드 ===== */}
-          <h2 style={{ marginTop: '16px' }}>{post.title}</h2>
+              <div style={{ marginTop: '12px' }}>
+                <button onClick={updatePost}>저장</button>
+                <button
+                  onClick={() => setEditing(false)}
+                  style={{ marginLeft: '8px' }}
+                >
+                  취소
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* ===== 보기 모드 ===== */}
+              <h2>{post.title}</h2>
 
-          <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
-            {getNameById(post.author_id)} ·{' '}
-            {new Date(post.created_at).toLocaleString()}
-          </div>
+              <div style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
+                {getNameById(post.author_id)} ·{' '}
+                {new Date(post.created_at).toLocaleString()}
+              </div>
 
-          <p style={{ whiteSpace: 'pre-wrap' }}>{post.content}</p>
+              <p style={{ whiteSpace: 'pre-wrap' }}>{post.content}</p>
 
-          <div style={{ marginTop: '24px' }}>
-            <button onClick={() => router.push('/board')}>
-              목록으로
-            </button>
+              <div style={{ marginTop: '16px' }}>
+                <button onClick={() => router.push('/board')}>
+                  목록으로
+                </button>
 
-            <button
-              onClick={() => setEditing(true)}
-              style={{ marginLeft: '8px' }}
-            >
-              수정
-            </button>
+                <button
+                  onClick={() => setEditing(true)}
+                  style={{ marginLeft: '8px' }}
+                >
+                  수정
+                </button>
 
-            <button
-              onClick={deletePost}
-              style={{ marginLeft: '8px', color: 'red' }}
-            >
-              삭제
-            </button>
-          </div>
-        </>
-      )}
+                <button
+                  onClick={deletePost}
+                  style={{ marginLeft: '8px', color: 'red' }}
+                >
+                  삭제
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </main>
   );
 }

@@ -33,7 +33,7 @@ export default function CompanyBenefitsManagePage() {
   };
 
   /* ======================
-     선택 회사 복지 불러오기
+     선택 회사 복지
   ====================== */
   const fetchBenefits = async (companyId: string) => {
     if (!companyId) {
@@ -54,37 +54,35 @@ export default function CompanyBenefitsManagePage() {
     setBenefits(map);
   };
 
-useEffect(() => {
-  let mounted = true;
+  useEffect(() => {
+    let mounted = true;
 
-  const load = async () => {
-    if (!mounted) return;
-    await fetchCompanies();
-  };
+    const load = async () => {
+      if (!mounted) return;
+      await fetchCompanies();
+    };
 
-  load();
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  return () => {
-    mounted = false;
-  };
-}, []);
+  useEffect(() => {
+    if (!selectedCompanyId) return;
 
-useEffect(() => {
-  if (!selectedCompanyId) return;
+    let mounted = true;
 
-  let mounted = true;
+    const load = async () => {
+      if (!mounted) return;
+      await fetchBenefits(selectedCompanyId);
+    };
 
-  const load = async () => {
-    if (!mounted) return;
-    await fetchBenefits(selectedCompanyId);
-  };
-
-  load();
-
-  return () => {
-    mounted = false;
-  };
-}, [selectedCompanyId]);
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, [selectedCompanyId]);
 
   /* ======================
      저장
@@ -95,13 +93,11 @@ useEffect(() => {
       return;
     }
 
-    // 기존 복지 삭제
     await supabase
       .from('company_benefits')
       .delete()
       .eq('company_id', selectedCompanyId);
 
-    // 새로 저장
     const rows = Object.entries(benefits)
       .filter(([, v]) => v.trim())
       .map(([category, content]) => ({
@@ -117,63 +113,64 @@ useEffect(() => {
     alert('저장되었습니다.');
   };
 
+  /* ======================
+     렌더
+  ====================== */
   return (
-    <main style={{ padding: '16px', maxWidth: '720px', margin: '0 auto' }}>
-      <h1>🏢 회사 복지 관리</h1>
+    <main>
+      <div className="page-container">
+        <h1>🏢 회사 복지 관리</h1>
 
-      <section style={cardStyle}>
-        <h2>회사 선택</h2>
+        {/* 회사 선택 */}
+        <section className="card">
+          <h2>회사 선택</h2>
 
-        <select
-          value={selectedCompanyId}
-          onChange={(e) => setSelectedCompanyId(e.target.value)}
-          style={inputStyle}
-        >
-          <option value="">회사 선택</option>
-          {companies.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.company_name}
-            </option>
-          ))}
-        </select>
-      </section>
-
-      {selectedCompanyId && (
-        <section style={cardStyle}>
-          <h2>복지 입력 / 수정</h2>
-
-          {CATEGORIES.map((cat) => (
-            <div key={cat} style={{ marginBottom: '8px' }}>
-              <strong>{cat}</strong>
-              <input
-                value={benefits[cat] ?? ''}
-                onChange={(e) =>
-                  setBenefits((prev) => ({
-                    ...prev,
-                    [cat]: e.target.value,
-                  }))
-                }
-                style={{ ...inputStyle, marginTop: '4px' }}
-                placeholder="복지 내용을 입력하세요"
-              />
-            </div>
-          ))}
-
-          <button onClick={saveBenefits}>저장</button>
+          <select
+            value={selectedCompanyId}
+            onChange={(e) => setSelectedCompanyId(e.target.value)}
+            style={{ width: '100%', padding: '6px' }}
+          >
+            <option value="">회사 선택</option>
+            {companies.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.company_name}
+              </option>
+            ))}
+          </select>
         </section>
-      )}
+
+        {/* 복지 입력 */}
+        {selectedCompanyId && (
+          <section className="card">
+            <h2>복지 입력 / 수정</h2>
+
+            {CATEGORIES.map((cat) => (
+              <div key={cat} style={{ marginBottom: '8px' }}>
+                <strong>{cat}</strong>
+                <input
+                  value={benefits[cat] ?? ''}
+                  onChange={(e) =>
+                    setBenefits((prev) => ({
+                      ...prev,
+                      [cat]: e.target.value,
+                    }))
+                  }
+                  placeholder="복지 내용을 입력하세요"
+                  style={{
+                    width: '100%',
+                    padding: '6px',
+                    marginTop: '4px',
+                  }}
+                />
+              </div>
+            ))}
+
+            <button style={{ marginTop: '8px' }} onClick={saveBenefits}>
+              저장
+            </button>
+          </section>
+        )}
+      </div>
     </main>
   );
 }
-
-const cardStyle = {
-  border: '1px solid #ddd',
-  borderRadius: '8px',
-  padding: '12px',
-  marginBottom: '16px',
-};
-
-const inputStyle = {
-  width: '100%',
-  padding: '6px',
-};

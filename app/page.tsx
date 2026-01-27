@@ -58,7 +58,7 @@ export default function Home() {
     }
 
     setEditing((prev) => ({ ...prev, [authorId]: false }));
-    fetchNotices(); // ✅ 저장 후 다시 불러오기
+    fetchNotices();
   };
 
   /* ======================
@@ -75,88 +75,97 @@ export default function Home() {
   };
 
   /* ======================
-     이번 주 일정 (월요일 ~ 일요일 기준)
+     이번 주 일정 (월요일 ~ 일요일)
   ====================== */
-const fetchWeekSchedules = async () => {
-  const today = new Date();
-  const day = today.getDay(); // 0=일, 1=월 ...
+  const fetchWeekSchedules = async () => {
+    const today = new Date();
+    const day = today.getDay(); // 0=일
 
-  // 월요일 기준
-  const diffToMonday = day === 0 ? -6 : 1 - day;
+    const diffToMonday = day === 0 ? -6 : 1 - day;
 
-  const monday = new Date(today);
-  monday.setDate(today.getDate() + diffToMonday);
-  monday.setHours(0, 0, 0, 0);
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diffToMonday);
+    monday.setHours(0, 0, 0, 0);
 
-  const sunday = new Date(monday);
-  sunday.setDate(monday.getDate() + 6);
-  sunday.setHours(23, 59, 59, 999);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
 
-  // ✅ 로컬 날짜 문자열 생성 (중요)
-  const formatDate = (d: Date) => {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
+    const formatDate = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+
+    const start = formatDate(monday);
+    const end = formatDate(sunday);
+
+    const { data, error } = await supabase
+      .from('family_schedules')
+      .select('id, title, schedule_date, author_id')
+      .gte('schedule_date', start)
+      .lte('schedule_date', end)
+      .order('schedule_date');
+
+    if (error) {
+      console.error('주간 일정 조회 실패', error);
+      return;
+    }
+
+    setWeekSchedules(data ?? []);
   };
 
-  const start = formatDate(monday);
-  const end = formatDate(sunday);
+  useEffect(() => {
+    let mounted = true;
 
-  const { data, error } = await supabase
-    .from('family_schedules')
-    .select('id, title, schedule_date, author_id')
-    .gte('schedule_date', start)
-    .lte('schedule_date', end)
-    .order('schedule_date');
+    const load = async () => {
+      if (!mounted) return;
 
-  if (error) {
-    console.error('주간 일정 조회 실패', error);
-    return;
-  }
+      await fetchMembers();
+      await fetchNotices();
+      await fetchRecentPosts();
+      await fetchWeekSchedules();
+    };
 
-  setWeekSchedules(data ?? []);
-};
+    load();
 
-useEffect(() => {
-  let mounted = true;
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
-  const load = async () => {
-    if (!mounted) return;
+  /* ======================
+     유틸
+  ====================== */
+  const isToday = (dateStr: string) => {
+    const today = new Date();
+    const d = new Date(dateStr);
 
-    await fetchMembers();
-    await fetchNotices();
-    await fetchRecentPosts();
-    await fetchWeekSchedules();
+    return (
+      today.getFullYear() === d.getFullYear() &&
+      today.getMonth() === d.getMonth() &&
+      today.getDate() === d.getDate()
+    );
   };
 
-  load();
-
-  return () => {
-    mounted = false;
+  const getWeekdayLabel = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    return days[d.getDay()];
   };
-}, []);
-
-
-const isToday = (dateStr: string) => {
-  const today = new Date();
-  const d = new Date(dateStr);
-
-  return (
-    today.getFullYear() === d.getFullYear() &&
-    today.getMonth() === d.getMonth() &&
-    today.getDate() === d.getDate()
-  );
-};
 
   const getNameById = (id: string) =>
     members.find((m) => m.id === id)?.name ?? '알 수 없음';
 
+  /* ======================
+     렌더
+  ====================== */
   return (
     <main style={{ padding: '16px' }}>
       <div style={{ display: 'grid', gap: '12px' }}>
         {/* 📢 오늘의 공지 */}
-        <section style={cardStyle}>
+        <section className="card">
           <h2>📢 오늘의 공지</h2>
 
           {members.map((m) => (
@@ -169,9 +178,7 @@ const isToday = (dateStr: string) => {
                 gap: '8px',
               }}
             >
-              <strong style={{ minWidth: '60px' }}>
-                {m.name}:
-              </strong>
+              <strong style={{ minWidth: '60px' }}>{m.name}:</strong>
 
               <input
                 type="text"
@@ -200,69 +207,65 @@ const isToday = (dateStr: string) => {
               )}
 
               {editing[m.id] && (
-                <button onClick={() => saveNotice(m.id)}>
-                  저장
-                </button>
+                <button onClick={() => saveNotice(m.id)}>저장</button>
               )}
             </div>
           ))}
         </section>
 
         {/* 📅 가족 일정 (이번 주) */}
-        <section style={cardStyle}>
+        <section className="card">
           <h2>📅 가족 일정 (이번 주)</h2>
 
-          {weekSchedules.length === 0 && (
-            <p>이번 주 일정이 없습니다.</p>
-          )}
+          {weekSchedules.length === 0 && <p>이번 주 일정이 없습니다.</p>}
 
           <ul style={{ paddingLeft: '16px' }}>
             {weekSchedules.map((s) => (
-           <li
-  key={s.id}
-  style={{
-    marginBottom: '6px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '6px',
-  }}
->
-  {/* 날짜 + 빨간 점 */}
-  <span style={{ position: 'relative', display: 'inline-block' }}>
-    <strong>
-      {new Date(s.schedule_date).getDate()}일
-    </strong>
+              <li
+                key={s.id}
+                style={{
+                  marginBottom: '6px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span
+                  style={{
+                    position: 'relative',
+                    display: 'inline-block',
+                    minWidth: '20px',
+                  }}
+                >
+                  <strong>{getWeekdayLabel(s.schedule_date)}</strong>
 
-    {isToday(s.schedule_date) && (
-      <span
-        style={{
-          position: 'absolute',
-          top: '-2px',
-          right: '-6px',
-          width: '6px',
-          height: '6px',
-          backgroundColor: '#e53935',
-          borderRadius: '50%',
-        }}
-      />
-    )}
-  </span>
+                  {isToday(s.schedule_date) && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '-2px',
+                        right: '-6px',
+                        width: '6px',
+                        height: '6px',
+                        backgroundColor: '#e53935',
+                        borderRadius: '50%',
+                      }}
+                    />
+                  )}
+                </span>
 
-  <span>- {s.title}</span>
-</li>
+                <span>- {s.title}</span>
+              </li>
             ))}
           </ul>
 
-          <a
-            href="/schedule"
-            style={{ display: 'inline-block', marginTop: '8px' }}
-          >
+          <a href="/schedule" style={{ display: 'inline-block', marginTop: '8px' }}>
             전체 일정 보기 →
           </a>
         </section>
 
         {/* 📝 게시판 */}
-        <section style={cardStyle}>
+        <section className="card">
           <h2>📝 게시판</h2>
 
           {recentPosts.length === 0 && (
@@ -285,16 +288,13 @@ const isToday = (dateStr: string) => {
             ))}
           </ul>
 
-          <a
-            href="/board"
-            style={{ display: 'inline-block', marginTop: '8px' }}
-          >
+          <a href="/board" style={{ display: 'inline-block', marginTop: '8px' }}>
             게시판으로 이동 →
           </a>
         </section>
 
         {/* 🔗 바로가기 */}
-        <section style={cardStyle}>
+        <section className="card">
           <h2>🔗 바로가기</h2>
           <ul>
             <li><a href="/cards">카드 혜택</a></li>
@@ -316,9 +316,3 @@ const isToday = (dateStr: string) => {
     </main>
   );
 }
-
-const cardStyle = {
-  border: '1px solid #ddd',
-  borderRadius: '8px',
-  padding: '12px',
-};
