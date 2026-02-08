@@ -5,11 +5,30 @@ import { useEffect, useState } from 'react';
 import supabase from '@/lib/supabase';
 
 export default function Home() {
+  /* ======================
+     hydration 방지
+  ====================== */
+  const [mounted, setMounted] = useState(false);
+
+  /* ======================
+     상태들 (모두 최상단)
+  ====================== */
   const [members, setMembers] = useState<any[]>([]);
   const [recentPosts, setRecentPosts] = useState<any[]>([]);
   const [notices, setNotices] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<Record<string, boolean>>({});
   const [weekSchedules, setWeekSchedules] = useState<any[]>([]);
+
+  /* ===== 할 일 ===== */
+  const [todo, setTodo] = useState('');
+  const [editingTodo, setEditingTodo] = useState(false);
+
+  /* ======================
+     mounted 체크
+  ====================== */
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   /* ======================
      가족 구성원
@@ -23,7 +42,7 @@ export default function Home() {
   };
 
   /* ======================
-     사용자별 공지
+     오늘의 공지
   ====================== */
   const fetchNotices = async () => {
     const { data } = await supabase
@@ -41,24 +60,48 @@ export default function Home() {
   const saveNotice = async (authorId: string) => {
     const content = notices[authorId] ?? '';
 
-    const { error } = await supabase
+    await supabase
       .from('home_notices')
       .upsert(
-        {
-          author_id: authorId,
-          content,
-        },
+        { author_id: authorId, content },
         { onConflict: 'author_id' }
       );
 
-    if (error) {
-      console.error('공지 저장 실패', error);
-      alert('공지 저장 중 오류가 발생했습니다.');
+    setEditing((prev) => ({ ...prev, [authorId]: false }));
+    fetchNotices();
+  };
+
+  /* ======================
+     할 일 (공동 메모)
+  ====================== */
+  const fetchTodo = async () => {
+    const { data } = await supabase
+      .from('home_todos')
+      .select('content')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    setTodo(data?.[0]?.content ?? '');
+  };
+
+  const saveTodo = async () => {
+    if (!todo.trim()) {
+      setEditingTodo(false);
       return;
     }
 
-    setEditing((prev) => ({ ...prev, [authorId]: false }));
-    fetchNotices();
+    const { error } = await supabase
+      .from('home_todos')
+      .insert({ content: todo });
+
+    if (error) {
+      alert('할 일 저장 중 오류가 발생했습니다.');
+      console.error(error);
+      return;
+    }
+
+    setEditingTodo(false);
+    fetchTodo();
   };
 
   /* ======================
@@ -75,84 +118,58 @@ export default function Home() {
   };
 
   /* ======================
-     이번 주 일정 (월요일 ~ 일요일)
+     이번 주 일정
   ====================== */
   const fetchWeekSchedules = async () => {
     const today = new Date();
     const day = today.getDay(); // 0=일
-
     const diffToMonday = day === 0 ? -6 : 1 - day;
 
     const monday = new Date(today);
     monday.setDate(today.getDate() + diffToMonday);
-    monday.setHours(0, 0, 0, 0);
 
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
 
-    const formatDate = (d: Date) => {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    };
+    const format = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+        d.getDate()
+      ).padStart(2, '0')}`;
 
-    const start = formatDate(monday);
-    const end = formatDate(sunday);
-
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('family_schedules')
       .select('id, title, schedule_date, author_id')
-      .gte('schedule_date', start)
-      .lte('schedule_date', end)
+      .gte('schedule_date', format(monday))
+      .lte('schedule_date', format(sunday))
       .order('schedule_date');
-
-    if (error) {
-      console.error('주간 일정 조회 실패', error);
-      return;
-    }
 
     setWeekSchedules(data ?? []);
   };
 
+  /* ======================
+     초기 로딩
+  ====================== */
   useEffect(() => {
-    let mounted = true;
-
-    const load = async () => {
-      if (!mounted) return;
-
-      await fetchMembers();
-      await fetchNotices();
-      await fetchRecentPosts();
-      await fetchWeekSchedules();
-    };
-
-    load();
-
-    return () => {
-      mounted = false;
-    };
+    fetchMembers();
+    fetchNotices();
+    fetchTodo();
+    fetchRecentPosts();
+    fetchWeekSchedules();
   }, []);
+
+  if (!mounted) return null;
 
   /* ======================
      유틸
   ====================== */
   const isToday = (dateStr: string) => {
-    const today = new Date();
+    const t = new Date();
     const d = new Date(dateStr);
-
     return (
-      today.getFullYear() === d.getFullYear() &&
-      today.getMonth() === d.getMonth() &&
-      today.getDate() === d.getDate()
+      t.getFullYear() === d.getFullYear() &&
+      t.getMonth() === d.getMonth() &&
+      t.getDate() === d.getDate()
     );
-  };
-
-  const getWeekdayLabel = (dateStr: string) => {
-    const d = new Date(dateStr);
-    const days = ['일', '월', '화', '수', '목', '금', '토'];
-    return days[d.getDay()];
   };
 
   const getNameById = (id: string) =>
@@ -162,7 +179,7 @@ export default function Home() {
      렌더
   ====================== */
   return (
-    <main style={{ padding: '16px' }}>
+    <main className="page-container">
       <div style={{ display: 'grid', gap: '12px' }}>
         {/* 📢 오늘의 공지 */}
         <section className="card">
@@ -174,14 +191,15 @@ export default function Home() {
               style={{
                 display: 'flex',
                 alignItems: 'center',
+                gap: '6px',
                 marginBottom: '8px',
-                gap: '8px',
               }}
             >
-              <strong style={{ minWidth: '60px' }}>{m.name}:</strong>
+              <strong style={{ width: '56px', flexShrink: 0 }}>
+                {m.name}
+              </strong>
 
               <input
-                type="text"
                 value={notices[m.id] ?? ''}
                 disabled={!editing[m.id]}
                 onChange={(e) =>
@@ -190,78 +208,74 @@ export default function Home() {
                     [m.id]: e.target.value,
                   }))
                 }
-                style={{ flex: 1 }}
+                style={{ flex: 1, minWidth: 0 }}
               />
 
-              {!editing[m.id] && (
-                <button
-                  onClick={() =>
-                    setEditing((prev) => ({
-                      ...prev,
-                      [m.id]: true,
-                    }))
-                  }
-                >
-                  수정
-                </button>
-              )}
-
-              {editing[m.id] && (
-                <button onClick={() => saveNotice(m.id)}>저장</button>
-              )}
+              <button
+                style={{ width: '44px' }}
+                onClick={() =>
+                  editing[m.id]
+                    ? saveNotice(m.id)
+                    : setEditing((p) => ({ ...p, [m.id]: true }))
+                }
+              >
+                {editing[m.id] ? '저장' : '수정'}
+              </button>
             </div>
           ))}
         </section>
 
-        {/* 📅 가족 일정 (이번 주) */}
+        {/* 📝 할 일 */}
+        <section className="card">
+          <h2>📝 할 일</h2>
+
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <textarea
+              value={todo}
+              disabled={!editingTodo}
+              onChange={(e) => setTodo(e.target.value)}
+              placeholder="오늘 할 일을 적어보세요"
+              rows={5}
+              style={{
+                flex: 1,
+                resize: 'none',
+                overflowY: 'auto',
+              }}
+            />
+
+            <button
+              style={{ width: '44px', alignSelf: 'flex-start' }}
+              onClick={() =>
+                editingTodo ? saveTodo() : setEditingTodo(true)
+              }
+            >
+              {editingTodo ? '저장' : '수정'}
+            </button>
+          </div>
+        </section>
+
+        {/* 📅 가족 일정 */}
         <section className="card">
           <h2>📅 가족 일정 (이번 주)</h2>
 
-          {weekSchedules.length === 0 && <p>이번 주 일정이 없습니다.</p>}
+          {weekSchedules.length === 0 && (
+            <p>이번 주 일정이 없습니다.</p>
+          )}
 
-          <ul style={{ paddingLeft: '16px' }}>
+          <ul>
             {weekSchedules.map((s) => (
-              <li
-                key={s.id}
-                style={{
-                  marginBottom: '6px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <span
-                  style={{
-                    position: 'relative',
-                    display: 'inline-block',
-                    minWidth: '20px',
-                  }}
-                >
-                  <strong>{getWeekdayLabel(s.schedule_date)}</strong>
-
-                  {isToday(s.schedule_date) && (
-                    <span
-                      style={{
-                        position: 'absolute',
-                        top: '-2px',
-                        right: '-6px',
-                        width: '6px',
-                        height: '6px',
-                        backgroundColor: '#e53935',
-                        borderRadius: '50%',
-                      }}
-                    />
-                  )}
-                </span>
-
-                <span>- {s.title}</span>
+              <li key={s.id}>
+                <strong>
+                  {new Date(s.schedule_date).getDate()}일
+                </strong>
+                {' - '}
+                {s.title}
+                {isToday(s.schedule_date) && ' 🔴'}
               </li>
             ))}
           </ul>
 
-          <a href="/schedule" style={{ display: 'inline-block', marginTop: '8px' }}>
-            전체 일정 보기 →
-          </a>
+          <a href="/schedule">전체 일정 보기 →</a>
         </section>
 
         {/* 📝 게시판 */}
@@ -274,23 +288,21 @@ export default function Home() {
             </p>
           )}
 
-          <ul style={{ paddingLeft: '16px', marginTop: '8px' }}>
-            {recentPosts.map((post) => (
-              <li key={post.id} style={{ marginBottom: '6px' }}>
-                <a href={`/board/${post.id}`}>
-                  <strong>{post.title}</strong>
+          <ul>
+            {recentPosts.map((p) => (
+              <li key={p.id} style={{ marginBottom: '6px' }}>
+                <a href={`/board/${p.id}`}>
+                  <strong>{p.title}</strong>
                 </a>
                 <div style={{ fontSize: '12px', color: '#666' }}>
-                  {getNameById(post.author_id)} ·{' '}
-                  {new Date(post.created_at).toLocaleDateString()}
+                  {getNameById(p.author_id)} ·{' '}
+                  {new Date(p.created_at).toLocaleDateString()}
                 </div>
               </li>
             ))}
           </ul>
 
-          <a href="/board" style={{ display: 'inline-block', marginTop: '8px' }}>
-            게시판으로 이동 →
-          </a>
+          <a href="/board">게시판으로 이동 →</a>
         </section>
 
         {/* 🔗 바로가기 */}
@@ -300,15 +312,13 @@ export default function Home() {
             <li><a href="/cards">카드 혜택</a></li>
             <li><a href="/company-benefits">회사 복지</a></li>
             <li>
-              요리 레시피 (
               <a
                 href="https://wonderbb.github.io/hyrecipes/"
                 target="_blank"
                 rel="noreferrer"
               >
-                바로가기
+                요리 레시피
               </a>
-              )
             </li>
           </ul>
         </section>
