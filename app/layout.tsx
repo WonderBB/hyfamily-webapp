@@ -1,6 +1,20 @@
 // app/layout.tsx
 import './globals.css';
 import HamburgerMenu from './components/HamburgerMenu';
+import type { Metadata } from 'next';
+
+/* ✅ PWA + 기본 메타데이터 */
+export const metadata: Metadata = {
+  title: 'HY Family',
+  description: '우리 가족을 위한 홈 대시보드',
+  manifest: '/manifest.json',
+  themeColor: '#121212',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'HY',
+  },
+};
 
 export default function RootLayout({
   children,

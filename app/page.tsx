@@ -122,7 +122,7 @@ export default function Home() {
   ====================== */
   const fetchWeekSchedules = async () => {
     const today = new Date();
-    const day = today.getDay(); // 0=일
+    const day = today.getDay();
     const diffToMonday = day === 0 ? -6 : 1 - day;
 
     const monday = new Date(today);
@@ -179,7 +179,10 @@ export default function Home() {
      렌더
   ====================== */
   return (
-    <main className="page-container">
+    <main
+      className="page-container"
+      style={{ paddingTop: '8px' }} // ✅ 상단 여백 줄인 핵심 수정
+    >
       <div style={{ display: 'grid', gap: '12px' }}>
         {/* 📢 오늘의 공지 */}
         <section className="card">
