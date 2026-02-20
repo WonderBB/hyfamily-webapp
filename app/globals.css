@@ -1,5 +1,5 @@
 /* =========================
-   🔒 레이아웃 안정화 핵심
+   🔒 레이아웃 안정화
 ========================= */
 *,
 *::before,
@@ -7,7 +7,6 @@
   box-sizing: border-box;
 }
 
-/* 가로 스크롤 방지 */
 html,
 body {
   width: 100%;
@@ -16,22 +15,27 @@ body {
 }
 
 /* =========================
-   🌗 테마 변수
+   🌑 다크 테마 (스크린샷 기준)
 ========================= */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --background: #121212;
+  --foreground: #eaeaea;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --card-bg: #1e1e1e;
+  --card-border: #3a3a3a;
+
+  --input-bg: #3a3a3a;
+  --input-border: #555555;
+
+  --button-bg: #4a4a4a;
+  --button-border: #6a6a6a;
+
+  --text-muted: #b0b0b0;
+  --link-color: #4da3ff;
 }
 
 /* =========================
-   🧍 기본 바디
+   🧍 body
 ========================= */
 body {
   margin: 0;
@@ -41,17 +45,17 @@ body {
 }
 
 /* =========================
-   📦 페이지 공통 컨테이너
+   📦 페이지 컨테이너
 ========================= */
 .page-container {
   width: 100%;
-  max-width: 720px;   /* 📱 모바일~PC 공통 기준 */
-  margin: 0 auto;     /* 중앙 정렬 */
-  padding: 60px 16px 16px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 45px 8px 8px;
 }
 
 /* =========================
-   🏷 제목 크기 (모바일 기준)
+   🏷 제목
 ========================= */
 h1 {
   font-size: 18px;
@@ -60,7 +64,7 @@ h1 {
 
 h2 {
   font-size: 16px;
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
 }
 
 h3 {
@@ -69,10 +73,10 @@ h3 {
 }
 
 /* =========================
-   🔗 링크 스타일 (촌스러움 제거)
+   🔗 링크
 ========================= */
 a {
-  color: #1976d2;
+  color: var(--link-color);
   text-decoration: none;
 }
 
@@ -81,49 +85,100 @@ a:hover {
 }
 
 /* =========================
-   🖼 이미지/미디어 안전 처리
-========================= */
-img,
-video {
-  max-width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* =========================
-   🧩 리스트 기본 정리
+   🧩 리스트
 ========================= */
 ul {
-  padding-left: 16px;
+  padding-left: 10px;
   margin: 0;
 }
 
 /* =========================
-   📦 카드 공통 스타일 (모바일 압축)
+   📦 카드
 ========================= */
 .card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 10px 12px;   /* ⬅ 기존보다 압축 */
-  margin-bottom: 10px; /* ⬅ 카드 간 간격 축소 */
-  background: #fff;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin-bottom: 1px;
 }
 
-/* 카드 제목 */
-.card h2 {
-  font-size: 15px;
-  margin: 0 0 6px 0;
-}
-
-/* 카드 내부 텍스트 */
 .card p,
 .card li {
   font-size: 14px;
+  color: var(--foreground);
+  margin-bottom: 4px;
+}
+
+/* =========================
+   ✏️ input / textarea
+========================= */
+input,
+textarea {
+  background: var(--input-bg);
+  color: var(--foreground);
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* =========================
+   🔘 버튼
+========================= */
+button {
+  background: var(--button-bg);
+  color: var(--foreground);
+  border: 1px solid var(--button-border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  white-space: nowrap;     /* 🔥 PC 줄바꿈 방지 */
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* =========================
+   🧾 보조 텍스트
+========================= */
+.text-muted {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+
+/* 카드 제목 + 버튼 한 줄 정렬 */
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+/* 제목 자체 여백 제거 */
+.card-title-row h2 {
   margin: 0;
 }
 
-/* 카드 안 버튼/링크 */
-.card a,
-.card button {
-  font-size: 13px;
+/* 제목 옆 수정 버튼 */
+.card-title-button {
+  font-size: 12px;
+  padding: 4px 8px;
+  height: 28px;
+  white-space: nowrap;
+}
+
+
+/* 오늘의 공지 - 멤버 이름 */
+.notice-member-name {
+  font-size: 15px;      /* 기존보다 작게 */
+  font-weight: 600;     /* 너무 얇아지지 않게 */
+  min-width: 44px;      /* 정렬 유지 */
+  display: inline-block;
 }

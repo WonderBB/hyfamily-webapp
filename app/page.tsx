@@ -11,7 +11,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
 
   /* ======================
-     상태들 (모두 최상단)
+     상태들
   ====================== */
   const [members, setMembers] = useState<any[]>([]);
   const [recentPosts, setRecentPosts] = useState<any[]>([]);
@@ -19,13 +19,9 @@ export default function Home() {
   const [editing, setEditing] = useState<Record<string, boolean>>({});
   const [weekSchedules, setWeekSchedules] = useState<any[]>([]);
 
-  /* ===== 할 일 ===== */
   const [todo, setTodo] = useState('');
   const [editingTodo, setEditingTodo] = useState(false);
 
-  /* ======================
-     mounted 체크
-  ====================== */
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -37,7 +33,6 @@ export default function Home() {
     const { data } = await supabase
       .from('family_members')
       .select('id, name');
-
     setMembers(data ?? []);
   };
 
@@ -72,16 +67,21 @@ export default function Home() {
   };
 
   /* ======================
-     할 일 (공동 메모)
+     할 일 (단일 row 유지 - key 기반)
   ====================== */
   const fetchTodo = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('home_todos')
       .select('content')
-      .order('created_at', { ascending: false })
-      .limit(1);
+      .eq('key', 'main')
+      .single();
 
-    setTodo(data?.[0]?.content ?? '');
+    if (error && error.code !== 'PGRST116') {
+      console.error(error);
+      return;
+    }
+
+    setTodo(data?.content ?? '');
   };
 
   const saveTodo = async () => {
@@ -92,11 +92,19 @@ export default function Home() {
 
     const { error } = await supabase
       .from('home_todos')
-      .insert({ content: todo });
+      .upsert(
+        {
+          key: 'main',
+          content: todo,
+        },
+        {
+          onConflict: 'key',
+        }
+      );
 
     if (error) {
-      alert('할 일 저장 중 오류가 발생했습니다.');
       console.error(error);
+      alert('저장 중 오류가 발생했습니다.');
       return;
     }
 
@@ -118,7 +126,7 @@ export default function Home() {
   };
 
   /* ======================
-     이번 주 일정
+     이번 주 일정 (시간 포함 + 정렬)
   ====================== */
   const fetchWeekSchedules = async () => {
     const today = new Date();
@@ -138,12 +146,23 @@ export default function Home() {
 
     const { data } = await supabase
       .from('family_schedules')
-      .select('id, title, schedule_date, author_id')
+      .select('id, title, schedule_date, schedule_time, author_id')
       .gte('schedule_date', format(monday))
-      .lte('schedule_date', format(sunday))
-      .order('schedule_date');
+      .lte('schedule_date', format(sunday));
 
-    setWeekSchedules(data ?? []);
+    const sorted =
+      data?.sort((a, b) => {
+        if (a.schedule_date !== b.schedule_date) {
+          return a.schedule_date.localeCompare(b.schedule_date);
+        }
+
+        if (a.schedule_time === 'ALL_DAY') return -1;
+        if (b.schedule_time === 'ALL_DAY') return 1;
+
+        return (a.schedule_time ?? '').localeCompare(b.schedule_time ?? '');
+      }) ?? [];
+
+    setWeekSchedules(sorted);
   };
 
   /* ======================
@@ -162,6 +181,12 @@ export default function Home() {
   /* ======================
      유틸
   ====================== */
+  const getDateWithDay = (dateStr: string) => {
+    const d = new Date(dateStr);
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    return `${d.getDate()}일 (${days[d.getDay()]})`;
+  };
+
   const isToday = (dateStr: string) => {
     const t = new Date();
     const d = new Date(dateStr);
@@ -179,15 +204,12 @@ export default function Home() {
      렌더
   ====================== */
   return (
-    <main
-      className="page-container"
-      style={{ paddingTop: '8px' }} // ✅ 상단 여백 줄인 핵심 수정
-    >
+    <main className="page-container" style={{ paddingTop: '8px' }}>
       <div style={{ display: 'grid', gap: '12px' }}>
+
         {/* 📢 오늘의 공지 */}
         <section className="card">
           <h2>📢 오늘의 공지</h2>
-
           {members.map((m) => (
             <div
               key={m.id}
@@ -198,7 +220,7 @@ export default function Home() {
                 marginBottom: '8px',
               }}
             >
-              <strong style={{ width: '56px', flexShrink: 0 }}>
+              <strong className="notice-member-name">
                 {m.name}
               </strong>
 
@@ -230,24 +252,22 @@ export default function Home() {
 
         {/* 📝 할 일 */}
         <section className="card">
-          <h2>📝 할 일</h2>
-
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <textarea
-              value={todo}
-              disabled={!editingTodo}
-              onChange={(e) => setTodo(e.target.value)}
-              placeholder="오늘 할 일을 적어보세요"
-              rows={5}
-              style={{
-                flex: 1,
-                resize: 'none',
-                overflowY: 'auto',
-              }}
-            />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '6px',
+            }}
+          >
+            <h2 style={{ margin: 0 }}>📝 할 일</h2>
 
             <button
-              style={{ width: '44px', alignSelf: 'flex-start' }}
+              style={{
+                padding: '4px 8px',
+                fontSize: '12px',
+                height: '28px',
+              }}
               onClick={() =>
                 editingTodo ? saveTodo() : setEditingTodo(true)
               }
@@ -255,6 +275,18 @@ export default function Home() {
               {editingTodo ? '저장' : '수정'}
             </button>
           </div>
+
+          <textarea
+            value={todo}
+            disabled={!editingTodo}
+            onChange={(e) => setTodo(e.target.value)}
+            rows={5}
+            style={{
+              width: '100%',
+              resize: 'none',
+              overflowY: 'auto',
+            }}
+          />
         </section>
 
         {/* 📅 가족 일정 */}
@@ -267,13 +299,36 @@ export default function Home() {
 
           <ul>
             {weekSchedules.map((s) => (
-              <li key={s.id}>
-                <strong>
-                  {new Date(s.schedule_date).getDate()}일
-                </strong>
-                {' - '}
-                {s.title}
-                {isToday(s.schedule_date) && ' 🔴'}
+              <li key={s.id} style={{ marginBottom: '6px' }}>
+                <span
+                  style={{
+                    position: 'relative',
+                    display: 'inline-block',
+                  }}
+                >
+                  <strong>
+                    {getDateWithDay(s.schedule_date)}
+                  </strong>
+                  {' - '}
+                  {s.schedule_time && s.schedule_time !== 'ALL_DAY' && (
+                    <span>{s.schedule_time} </span>
+                  )}
+                  {s.title}
+
+                  {isToday(s.schedule_date) && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        top: '3px',
+                        right: '-8px',
+                        width: '6px',
+                        height: '6px',
+                        backgroundColor: '#ff6b6b',
+                        borderRadius: '50%',
+                      }}
+                    />
+                  )}
+                </span>
               </li>
             ))}
           </ul>
@@ -325,6 +380,7 @@ export default function Home() {
             </li>
           </ul>
         </section>
+
       </div>
     </main>
   );
