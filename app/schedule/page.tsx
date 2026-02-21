@@ -217,7 +217,7 @@ export default function SchedulePage() {
                 border:'1px solid #3a3a3a',
                 textAlign:'center',
                 cursor:'pointer',
-                background:isSelected?'#8be9fa':'#1e1e1e',
+                background:isSelected?'#334155':'#1e1e1e',
                 borderRadius:'8px'
               }}
             >
@@ -226,7 +226,7 @@ export default function SchedulePage() {
                 margin:'0 auto',
                 lineHeight:'30px',
                 borderRadius:'50%',
-                backgroundColor:isToday?'#32ddfc':'transparent',
+                backgroundColor:isToday?'#2563eb':'transparent',
                 color:isToday?'#fff':color,
                 fontWeight:isToday?700:400
               }}>
@@ -237,7 +237,7 @@ export default function SchedulePage() {
                 <div style={{
                   width:'6px',
                   height:'6px',
-                  background:'#ff6b6b',
+                  background:'#dc2626',
                   borderRadius:'50%',
                   margin:'4px auto 0'
                 }}/>

@@ -9,6 +9,13 @@ export const metadata: Metadata = {
   description: '우리 가족을 위한 홈 대시보드',
   manifest: '/manifest.json',
   themeColor: '#121212',
+
+  /* 🔥 추가: 모바일 화면 정상 비율 */
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+  },
+
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',

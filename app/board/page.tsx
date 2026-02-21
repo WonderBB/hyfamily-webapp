@@ -13,8 +13,6 @@ export default function BoardPage() {
     {}
   );
   const [members, setMembers] = useState<any[]>([]);
-
-  // NEW 표시용
   const [newPostIds, setNewPostIds] = useState<Set<string>>(new Set());
 
   /* ======================
@@ -31,7 +29,8 @@ export default function BoardPage() {
   const fetchPosts = async () => {
     const { data } = await supabase
       .from('board_posts')
-      .select('id, title, created_at, author_id')
+      .select('id, title, created_at, author_id, is_notice') // 🔥 추가
+      .order('is_notice', { ascending: false }) // 🔥 공지 우선
       .order('created_at', { ascending: false });
 
     setPosts(data ?? []);
@@ -138,7 +137,14 @@ export default function BoardPage() {
               }}
             >
               <Link href={`/board/${post.id}`}>
-                <strong>{post.title}</strong>
+                <strong>
+                  {post.is_notice && (
+                    <span style={{ color: 'red', marginRight: '6px' }}>
+                      공지
+                    </span>
+                  )}
+                  {post.title}
+                </strong>
 
                 {newPostIds.has(post.id) && (
                   <span

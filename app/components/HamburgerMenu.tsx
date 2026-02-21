@@ -8,27 +8,30 @@ export default function HamburgerMenu() {
   const pathname = usePathname();
   const router = useRouter();
 
-  /* ======================
-     오늘 날짜 + 요일
-  ====================== */
   const todayLabel = new Date().toLocaleDateString('ko-KR', {
     month: 'numeric',
     day: 'numeric',
     weekday: 'short',
   });
 
-  /* ======================
-     페이지 이동 시 메뉴 닫기
-  ====================== */
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
-  /* ======================
-     햄버거 이동 (replace)
-  ====================== */
   const go = (path: string) => {
     router.replace(path);
+  };
+
+  /* 🔥 메뉴 공통 스타일 */
+  const menuItemStyle: React.CSSProperties = {
+    background: 'none',
+    border: 'none',
+    color: '#eaeaea',
+    textAlign: 'left',
+    fontSize: '16px',
+    padding: '6px 0',
+    cursor: 'pointer',
+    display: 'block',
   };
 
   return (
@@ -50,7 +53,6 @@ export default function HamburgerMenu() {
           zIndex: 1001,
         }}
       >
-        {/* ☰ 버튼 */}
         <button
           onClick={() => setOpen((prev) => !prev)}
           aria-label="메뉴"
@@ -67,7 +69,6 @@ export default function HamburgerMenu() {
           ☰
         </button>
 
-        {/* 오늘 날짜 */}
         <div
           style={{
             fontSize: '15px',
@@ -115,41 +116,26 @@ export default function HamburgerMenu() {
             style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '10px',
+              gap: '6px',
             }}
           >
-            <button
-              onClick={() => go('/')}
-              style={{ background: 'none', border: 'none', color: '#eaeaea', textAlign: 'left' }}
-            >
+            <button onClick={() => go('/')} style={menuItemStyle}>
               🏠 홈
             </button>
 
-            <button
-              onClick={() => go('/schedule')}
-              style={{ background: 'none', border: 'none', color: '#eaeaea', textAlign: 'left' }}
-            >
+            <button onClick={() => go('/schedule')} style={menuItemStyle}>
               📅 가족 일정
             </button>
 
-            <button
-              onClick={() => go('/board')}
-              style={{ background: 'none', border: 'none', color: '#eaeaea', textAlign: 'left' }}
-            >
+            <button onClick={() => go('/board')} style={menuItemStyle}>
               📝 게시판
             </button>
 
-            <button
-              onClick={() => go('/cards')}
-              style={{ background: 'none', border: 'none', color: '#eaeaea', textAlign: 'left' }}
-            >
+            <button onClick={() => go('/cards')} style={menuItemStyle}>
               💳 카드 혜택
             </button>
 
-            <button
-              onClick={() => go('/company-benefits')}
-              style={{ background: 'none', border: 'none', color: '#eaeaea', textAlign: 'left' }}
-            >
+            <button onClick={() => go('/company-benefits')} style={menuItemStyle}>
               🏢 회사 복지
             </button>
 
@@ -157,7 +143,7 @@ export default function HamburgerMenu() {
               href="https://wonderbb.github.io/hyrecipes/"
               target="_blank"
               rel="noreferrer"
-              style={{ color: '#eaeaea' }}
+              style={menuItemStyle}
             >
               🍳 요리 레시피
             </a>
