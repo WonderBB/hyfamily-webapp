@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
+  console.log("holiday key:", process.env.NEXT_PUBLIC_HOLIDAY_KEY);
+  
+    const { searchParams } = new URL(req.url);
 
   const year = searchParams.get('year');
   const month = searchParams.get('month');
