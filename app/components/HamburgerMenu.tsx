@@ -91,7 +91,7 @@ export default function HamburgerMenu() {
             right: 0,
             bottom: 0,
             background: 'rgba(0,0,0,0.3)',
-            zIndex: 999,
+            zIndex: 1001,
           }}
         />
       )}
@@ -104,11 +104,11 @@ export default function HamburgerMenu() {
             top: '40px',
             left: 0,
             width: '200px',
-            height: 'calc(100vh - 40px)',
+            height: 'calc(100dvh - 40px)',
             background: '#1e1e1e',
             borderRight: '1px solid #333',
             padding: '14px',
-            zIndex: 1000,
+            zIndex: 1002,
           }}
           onClick={(e) => e.stopPropagation()}
         >

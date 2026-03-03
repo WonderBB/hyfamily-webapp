@@ -152,7 +152,7 @@ export default function BoardPage() {
                       marginLeft: '6px',
                       fontSize: '11px',
                       color: '#fff',
-                      background: '#e53935',
+                      background: '#ff6b6b',
                       padding: '2px 6px',
                       borderRadius: '8px',
                     }}

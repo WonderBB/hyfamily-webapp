@@ -204,7 +204,7 @@ export default function Home() {
      렌더
   ====================== */
   return (
-    <main className="page-container" style={{ paddingTop: '8px' }}>
+    <main className="page-container" style={{ paddingTop: '24px' }}>
       <div style={{ display: 'grid', gap: '12px' }}>
 
         {/* 📢 오늘의 공지 */}
@@ -280,7 +280,7 @@ export default function Home() {
             value={todo}
             disabled={!editingTodo}
             onChange={(e) => setTodo(e.target.value)}
-            rows={5}
+            rows={8}
             style={{
               width: '100%',
               resize: 'none',

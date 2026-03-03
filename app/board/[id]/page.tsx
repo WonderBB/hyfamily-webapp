@@ -350,7 +350,7 @@ export default function BoardDetailPage() {
                   marginLeft: '6px',
                   fontSize: '10px',
                   color: '#fff',
-                  background: '#e53935',
+                  background: '#ff6b6b',
                   padding: '2px 6px',
                   borderRadius: '8px',
                 }}>
